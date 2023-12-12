@@ -1,0 +1,13 @@
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\bin\Debug\INTERFACE.exe.config
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\bin\Debug\INTERFACE.exe
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\bin\Debug\INTERFACE.pdb
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\obj\Debug\INTERFACE.csproj.AssemblyReference.cache
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\obj\Debug\INTERFACE.Properties.Resources.resources
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\obj\Debug\INTERFACE.csproj.GenerateResource.cache
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\obj\Debug\INTERFACE.csproj.CoreCompileInputs.cache
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\obj\Debug\INTERFACE.exe
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\obj\Debug\INTERFACE.pdb
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\bin\Debug\Newtonsoft.Json.dll
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\bin\Debug\Newtonsoft.Json.xml
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\obj\Debug\INTERFACE.csproj.CopyComplete
+C:\Users\imran\source\repos\INTERFACE\INTERFACE\obj\Debug\INTERFACE.Cliente.resources

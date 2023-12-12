@@ -13,16 +13,17 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace INTERFACE
 {
-    public partial class Form1 : Form
+    public partial class Cliente : Form
     {
         static TcpClient tcpClient;
         private NetworkStream stream;
         static Dictionary<string, string> Onlineclients = new Dictionary<string, string>();
 
-        public Form1()
+        public Cliente()
         {
             InitializeComponent();
         }
@@ -31,14 +32,16 @@ namespace INTERFACE
         {
             tcpClient = new TcpClient("127.0.0.1", 55555);
             stream = tcpClient.GetStream();
-            LogSection.Text += $"Conectando ao servidor...{Environment.NewLine}";
+            ChatSection.Text += $"Conectando ao servidor...{Environment.NewLine}";
 
 
             SendData(inputName.Text);
 
             // Inicia uma thread para receber mensagens
             Thread receiveThread = new Thread(delegate () { ReceiveMessages(); });
+
             receiveThread.Start();
+
 
         }
 
@@ -58,33 +61,87 @@ namespace INTERFACE
                     if (receivedData == null)
                         break;
 
-                    // Verifica o prefixo da mensagem recebida
-                    if (receivedData.StartsWith("DICT-"))
+                    string[] substrings = receivedData.Split('-');
+                    List<string> nomes = new List<string>();
+                    string mensagem = "";
+
+
+                    for (int i = 0; i < substrings.Length; i++)
                     {
-                        string[] partes = receivedData.Split(new string[] { "DICT-", ":", "/", "-MSG:" }, StringSplitOptions.None);
-
-                        // Armazena cada parte em sua respectiva variável
-                        string ip = partes[1];
-                        string porta = partes[2];
-                        string nome = partes[3];
-                        receivedData = partes[4];
-
+                        if (substrings[i] != "")
+                        {
+                            if (i == substrings.Length - 1)
+                            {
+                                mensagem = substrings[i];
+                            }
+                            else
+                            {
+                                nomes.Add(substrings[i]);
+                            }
+                        }
                     }
 
-                    if (receivedData.StartsWith("-MSG"))
+                    if (nomes.Count > 0)
                     {
-                        string[] parte = receivedData.Split(new string[] {"-MSG:"}, StringSplitOptions.None);
-                        receivedData = parte[0];
+                        this.Invoke((MethodInvoker)delegate ()
+                        {
+                            foreach (string nome in nomes)
+                            {
+                                if (!checkedListBox1.Items.Contains(nome))
+                                {
+                                    checkedListBox1.Items.Add(nome);
+                                }
+                                //Online.Text += $"{Name}{Environment.NewLine}";
+                                
+                            }
+                            if (!checkedListBox1.Items.Contains(Name))
+                            {
+                                ChatSection.Text += $"{mensagem}{Environment.NewLine}";
+                            }
+                        });
+                    } 
+                    else
+                    {
+                        string pattern = @"^\w+\s+\(privado\):\s+\w+";
+                        Regex regex = new Regex(pattern);
+
+                        if (regex.IsMatch(receivedData))
+                        {
+                            this.Invoke((MethodInvoker)delegate ()
+                            {
+                                Inbox.Text += $"{receivedData}{Environment.NewLine}";
+                            });
+                        } 
+                        else if (receivedData.EndsWith("saiu do chat."))
+                        {
+                            string[] nomeSaiu = receivedData.Split(' ');
+                            if (checkedListBox1.Items.Contains(nomeSaiu[0]))
+                            {
+                                this.Invoke((MethodInvoker)delegate ()
+                                {
+                                    int index = checkedListBox1.Items.IndexOf(nomeSaiu[0]);
+                                    checkedListBox1.Items[index] = checkedListBox1.Items[index].ToString() + " (Offline)";
+                                    checkedListBox1.SetItemCheckState(index, CheckState.Indeterminate);
+                                    //checkedListBox1.Items.RemoveAt(index);
+                                });
+
+                                this.Invoke((MethodInvoker)delegate ()
+                                {
+                                    ChatSection.Text += $"{receivedData}{Environment.NewLine}";
+                                });
+                            }
+                        } 
+                        else
+                        {
+                            this.Invoke((MethodInvoker)delegate ()
+                            {
+                                ChatSection.Text += $"{receivedData}{Environment.NewLine}";
+                            });
+                        }
+
+                        
+
                     }
-
-                    Console.WriteLine(receivedData);
-
-                    this.Invoke((MethodInvoker)delegate ()
-                    {
-                        ChatSection.Text += $"{receivedData}{Environment.NewLine}";
-                    });
-
-
                 }
                 catch
                 {
@@ -93,15 +150,25 @@ namespace INTERFACE
                 }
             }
         }
-
-        public void UpdateOwnDictionary(Dictionary<string, string> dicionarioRecebido)
+        /*
+        public void updateOwnList()
         {
-            foreach (var par in dicionarioRecebido)
+
+            foreach (var par in Onlineclients)
             {
-                // Se a chave já existe, atualiza o valor; caso contrário, adiciona a nova entrada
-                Onlineclients[par.Key] = par.Value;
+                string chave = par.Key;
+                string valor = par.Value;
+
+                this.Invoke((MethodInvoker)delegate ()
+                {
+                    if (!clientsList.Items.Contains(chave))
+                    {
+                        clientsList.Items.Add(chave);
+                    }
+                });
             }
-        }
+
+        } */
 
         private void richTextBox1_TextChanged(object sender, EventArgs e)
         {
@@ -120,6 +187,18 @@ namespace INTERFACE
 
         private void button1_Click(object sender, EventArgs e)
         {
+            foreach (int index in checkedListBox1.CheckedIndices)
+            {
+                string nomeDoItem = checkedListBox1.Items[index].ToString();
+                // Se você preferir passar o índice
+                SendData($"/msg {nomeDoItem} {InputChat.Text}");
+
+
+                // Se você preferir passar o nome do item
+                // string nomeDoItem = checkedListBox1.Items[index].ToString();
+                // FuncaoA(nomeDoItem);
+                return;
+            }
             SendData(InputChat.Text);
         }
 
@@ -155,31 +234,8 @@ namespace INTERFACE
 
         void SendData(string message)
         {
-
-            if (!string.IsNullOrEmpty(message))
-            {
-                if (clientsList.CheckedItems.Count > 0)
-                {
-                    foreach (var item in clientsList.CheckedItems)
-                    {
-                        // Aqui, estou assumindo que cada 'item' é uma string contendo o endereço IP e a porta no formato "IP:Porta"
-                        string[] parts = item.ToString().Split(':');
-                        if (parts.Length == 2)
-                        {
-                            string ip = parts[0];
-                            int port = int.Parse(parts[1]);
-
-                            // Chama a função para enviar a mensagem para o cliente especificado
-                            SendMessageToClient(ip, port, message);
-                        }
-                    }
-                }
-                else
-                {
-                    byte[] data = Encoding.UTF8.GetBytes(message);
-                    stream.Write(data, 0, data.Length);
-                }
-            }
+            byte[] data = Encoding.UTF8.GetBytes(message);
+            stream.Write(data, 0, data.Length);
         }
 
         public void SendMessageToClient(string ipAddress, int port, string message)
@@ -208,36 +264,23 @@ namespace INTERFACE
             }
         }
 
-        public void EnviarMensagemParaCliente(string endereco, string mensagem)
-        {
-            // Separa o IP e a porta com base no caractere ':'
-            string[] partes = endereco.Split(':');
-            string clientIP = partes[0];
-            int clientPort = int.Parse(partes[1]);
-
-            // Converte a mensagem em bytes
-            byte[] data = Encoding.UTF8.GetBytes(mensagem);
-
-            // Cria um TcpClient e conecta ao cliente
-            TcpClient client = new TcpClient(clientIP, clientPort);
-
-            // Obtém o NetworkStream
-            NetworkStream stream = client.GetStream();
-
-            // Envia os dados para o cliente
-            stream.Write(data, 0, data.Length);
-
-            // Fecha o stream e o cliente
-            stream.Close();
-            client.Close();
-        }
-
         private void Exit_Click(object sender, EventArgs e)
         {
-            tcpClient.Close();
+            SendData($"exit");
+            this.Close();
         }
 
         private void ChatSection_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label4_Click_1(object sender, EventArgs e)
         {
 
         }
