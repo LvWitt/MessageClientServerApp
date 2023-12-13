@@ -1,0 +1,15 @@
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\obj\Debug\net8.0\SERVER-CONSOLE.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\obj\Debug\net8.0\SERVER-CONSOLE.AssemblyInfoInputs.cache
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\obj\Debug\net8.0\SERVER-CONSOLE.AssemblyInfo.cs
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\obj\Debug\net8.0\SERVER-CONSOLE.csproj.CoreCompileInputs.cache
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\obj\Debug\net8.0\SERVER-CONSOLE.sourcelink.json
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\bin\Debug\net8.0\SERVER-CONSOLE.exe
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\bin\Debug\net8.0\SERVER-CONSOLE.deps.json
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\bin\Debug\net8.0\SERVER-CONSOLE.runtimeconfig.json
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\bin\Debug\net8.0\SERVER-CONSOLE.dll
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\bin\Debug\net8.0\SERVER-CONSOLE.pdb
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\obj\Debug\net8.0\SERVER-CONSOLE.dll
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\obj\Debug\net8.0\refint\SERVER-CONSOLE.dll
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\obj\Debug\net8.0\SERVER-CONSOLE.pdb
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\obj\Debug\net8.0\SERVER-CONSOLE.genruntimeconfig.cache
+C:\Users\imran\source\repos\INTERFACE\SERVER-CONSOLE\obj\Debug\net8.0\ref\SERVER-CONSOLE.dll
