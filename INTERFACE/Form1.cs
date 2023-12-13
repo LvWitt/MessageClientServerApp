@@ -14,12 +14,17 @@ using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.Net;
+
 
 namespace INTERFACE
 {
     public partial class Cliente : Form
     {
-        static TcpClient tcpClient;
+        private IPAddress ip = null;
+        private int port = 0;
+        private Thread th;
         private NetworkStream stream;
         static Dictionary<string, string> Onlineclients = new Dictionary<string, string>();
 
@@ -30,20 +35,133 @@ namespace INTERFACE
 
         private void button2_Click(object sender, EventArgs e)
         {
-            tcpClient = new TcpClient("127.0.0.1", 55555);
-            stream = tcpClient.GetStream();
+            try
+            {
+                TcpClient client = new TcpClient("192.168.18.27", 7000);
+                stream = client.GetStream();
+
+                ChatSection.ForeColor = Color.Green;
+                ChatSection.Text = "Configurações: \nIP do Servidor: " + "192.168.18.27" + "\nPorta do Servidor: " + "7000";
+                SendData($">{inputName.Text}");
+                //SendData($"{inputName.Text} entrou no chat.");
+            }
+
+            catch (Exception)
+            {
+                ChatSection.ForeColor = Color.Red;
+                ChatSection.Text = "ERRO NA CONEXÃO";
+            }
+
             ChatSection.Text += $"Conectando ao servidor...{Environment.NewLine}";
 
+            //acionado ao clicar no botao conectar
+            th = new Thread(delegate () { RecvMessage(); });
+            th.Start();
 
-            SendData(inputName.Text);
 
-            // Inicia uma thread para receber mensagens
-            Thread receiveThread = new Thread(delegate () { ReceiveMessages(); });
-
-            receiveThread.Start();
+            //SendData(inputName.Text);
 
 
         }
+
+        void RecvMessage()
+        {
+            while (true)
+            {
+                byte[] readingData = new byte[256];
+                StringBuilder completeMessage = new StringBuilder();
+                do
+                {
+                    int numberOfBytesRead = stream.Read(readingData, 0, readingData.Length);
+                    completeMessage.AppendFormat("{0}", Encoding.Unicode.GetString(readingData, 0, numberOfBytesRead));
+                }
+                while (stream.DataAvailable);
+                string receivedData = completeMessage.ToString();
+
+                string[] substrings = receivedData.Split('-');
+                List<string> nomes = new List<string>();
+                string mensagem = "";
+
+
+                for (int i = 0; i < substrings.Length; i++)
+                {
+                    if (substrings[i] != "")
+                    {
+                        if (i == substrings.Length - 1)
+                        {
+                            mensagem = substrings[i];
+                        }
+                        else
+                        {
+                            nomes.Add(substrings[i]);
+                        }
+                    }
+                }
+
+                if (nomes.Count > 0)
+                {
+                    this.Invoke((MethodInvoker)delegate ()
+                    {
+                        foreach (string nome in nomes)
+                        {
+                            if (!checkedListBox1.Items.Contains(nome))
+                            {
+                                checkedListBox1.Items.Add(nome);
+                            }
+                            //Online.Text += $"{Name}{Environment.NewLine}";
+
+                        }
+                        if (!checkedListBox1.Items.Contains(Name))
+                        {
+                            ChatSection.Text += $"{mensagem}{Environment.NewLine}";
+                        }
+                    });
+                }
+                else
+                {
+                    string pattern = @"^\w+\s+\(privado\):\s+\w+";
+                    Regex regex = new Regex(pattern);
+
+                    if (regex.IsMatch(receivedData))
+                    {
+                        this.Invoke((MethodInvoker)delegate ()
+                        {
+                            Inbox.Text += $"{receivedData}{Environment.NewLine}";
+                        });
+                    }
+                    else if (receivedData.EndsWith("saiu do chat."))
+                    {
+                        string[] nomeSaiu = receivedData.Split(' ');
+                        if (checkedListBox1.Items.Contains(nomeSaiu[0]))
+                        {
+                            this.Invoke((MethodInvoker)delegate ()
+                            {
+                                int index = checkedListBox1.Items.IndexOf(nomeSaiu[0]);
+                                checkedListBox1.Items[index] = checkedListBox1.Items[index].ToString() + " (Offline)";
+                                checkedListBox1.SetItemCheckState(index, CheckState.Indeterminate);
+                                //checkedListBox1.Items.RemoveAt(index);
+                            });
+
+                            this.Invoke((MethodInvoker)delegate ()
+                            {
+                                ChatSection.Text += $"{receivedData}{Environment.NewLine}";
+                            });
+                        }
+                    }
+                    else
+                    {
+                        this.Invoke((MethodInvoker)delegate ()
+                        {
+                            ChatSection.Text += $"{receivedData}{Environment.NewLine}";
+                        });
+                    }
+
+
+
+                }
+            }
+        }
+
 
         void ReceiveMessages()
         {
@@ -92,14 +210,14 @@ namespace INTERFACE
                                     checkedListBox1.Items.Add(nome);
                                 }
                                 //Online.Text += $"{Name}{Environment.NewLine}";
-                                
+
                             }
                             if (!checkedListBox1.Items.Contains(Name))
                             {
                                 ChatSection.Text += $"{mensagem}{Environment.NewLine}";
                             }
                         });
-                    } 
+                    }
                     else
                     {
                         string pattern = @"^\w+\s+\(privado\):\s+\w+";
@@ -111,7 +229,7 @@ namespace INTERFACE
                             {
                                 Inbox.Text += $"{receivedData}{Environment.NewLine}";
                             });
-                        } 
+                        }
                         else if (receivedData.EndsWith("saiu do chat."))
                         {
                             string[] nomeSaiu = receivedData.Split(' ');
@@ -130,7 +248,7 @@ namespace INTERFACE
                                     ChatSection.Text += $"{receivedData}{Environment.NewLine}";
                                 });
                             }
-                        } 
+                        }
                         else
                         {
                             this.Invoke((MethodInvoker)delegate ()
@@ -139,7 +257,7 @@ namespace INTERFACE
                             });
                         }
 
-                        
+
 
                     }
                 }
@@ -187,19 +305,23 @@ namespace INTERFACE
 
         private void button1_Click(object sender, EventArgs e)
         {
-            foreach (int index in checkedListBox1.CheckedIndices)
+            if (checkedListBox1.CheckedItems.Count > 0)
             {
-                string nomeDoItem = checkedListBox1.Items[index].ToString();
-                // Se você preferir passar o índice
-                SendData($"/msg {nomeDoItem} {InputChat.Text}");
+                foreach (int index in checkedListBox1.CheckedIndices)
+                {
+                    string nomeDoItem = checkedListBox1.Items[index].ToString();
+                    // Se você preferir passar o índice
+                    SendData($"/msg {nomeDoItem} {InputChat.Text}");
 
-
-                // Se você preferir passar o nome do item
-                // string nomeDoItem = checkedListBox1.Items[index].ToString();
-                // FuncaoA(nomeDoItem);
-                return;
+                    //InputChat.Text = "";
+                    // string nomeDoItem = checkedListBox1.Items[index].ToString();
+                    // FuncaoA(nomeDoItem);
+                }
             }
-            SendData(InputChat.Text);
+            else
+            {
+                SendData(InputChat.Text);
+            }
         }
 
         private void checkedListBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -234,7 +356,7 @@ namespace INTERFACE
 
         void SendData(string message)
         {
-            byte[] data = Encoding.UTF8.GetBytes(message);
+            byte[] data = Encoding.Unicode.GetBytes(message);
             stream.Write(data, 0, data.Length);
         }
 
@@ -281,6 +403,16 @@ namespace INTERFACE
         }
 
         private void label4_Click_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void checkedListBox1_SelectedIndexChanged_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void InputChat_TextChanged(object sender, EventArgs e)
         {
 
         }
